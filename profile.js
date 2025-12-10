@@ -90,7 +90,6 @@ async function handleUpdateProfile(e) {
         email: document.getElementById('profileEmail').value.trim(),
         name: document.getElementById('profileName').value.trim(),
         phone: document.getElementById('profilePhone').value.trim(),
-        country: document.getElementById('profileCountry').value.trim()
     };
     
     console.log('Updating profile with:', profileData);

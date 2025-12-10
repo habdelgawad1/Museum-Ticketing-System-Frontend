@@ -165,9 +165,9 @@ async function handleAddAdmin(e) {
     e.preventDefault();
     
     const adminData = {
+        name: document.getElementById('adminName').value.trim(),
         email: document.getElementById('adminEmail').value.trim(),
         password: document.getElementById('adminPassword').value,
-        role: document.getElementById('adminRole').value
     };
     
     console.log('Creating admin user with data:', adminData);

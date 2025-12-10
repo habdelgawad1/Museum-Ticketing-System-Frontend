@@ -7,7 +7,7 @@ const API_ENDPOINTS = {
     },
     users: {
         profile: API_BASE_URL + '/api/v1/users/profile',
-        updatePassword: API_BASE_URL + '/api/v1/users/profile'
+        updatePassword: API_BASE_URL + '/api/v1/users/profile/password'
     },
     tours: {
         all: API_BASE_URL + '/api/v1/tours',
