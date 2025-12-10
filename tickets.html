@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Museum - Book Tickets</title>
+    <link rel="stylesheet" href="tickets.css">
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Home</a>
+        
+        <h1>Book Tickets</h1>
+
+        <div class="form-section">
+            <h2>Booking Form</h2>
+            <form id="bookingForm">
+                <div class="form-group">
+                    <label>Select Tour</label>
+                    <select id="tourSelect" required>
+                        <option value="">-- Select a Tour --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="bookingDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Time</label>
+                    <input type="time" id="bookingTime" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Number of Tickets</label>
+                    <input type="number" id="numTickets" min="1" max="10" value="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Special Requests</label>
+                    <textarea id="specialRequests" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <div>
+                        <input type="radio" name="payment" value="cash" id="payCash" checked>
+                        <label for="payCash">Cash</label>
+                        
+                        <input type="radio" name="payment" value="points" id="payPoints">
+                        <label for="payPoints">Points</label>
+                    </div>
+                </div>
+
+                <div class="summary-box">
+                    <h3>Summary</h3>
+                    <p><strong>Tour:</strong> <span id="summaryTour">-</span></p>
+                    <p><strong>Date:</strong> <span id="summaryDate">-</span></p>
+                    <p><strong>Tickets:</strong> <span id="summaryTickets">-</span></p>
+                    <p><strong>Total:</strong> <span id="summaryTotal">$0.00</span></p>
+                </div>
+
+                <button type="submit" class="submit-btn">Confirm Booking</button>
+            </form>
+        </div>
+
+        <div class="bookings-section">
+            <h2>My Bookings</h2>
+            <div id="bookingsContainer" class="loading">Loading bookings...</div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="tickets.js"></script>
+</body>
+</html>

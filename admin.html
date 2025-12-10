@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Museum - Admin Panel</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Home</a>
+        
+        <h1>Admin Panel</h1>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('tours')">Tours</button>
+            <button class="tab-btn" onclick="showTab('users')">Users</button>
+        </div>
+
+        <div id="toursTab" class="tab-content active">
+            <h2>Create New Tour</h2>
+            <form id="createTourForm">
+                <div class="form-group">
+                    <label>Tour Name</label>
+                    <input type="text" id="tourName" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Guide Name</label>
+                    <input type="text" id="tourGuide" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Duration</label>
+                    <input type="text" id="tourDuration" placeholder="e.g., 2 hours" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Language</label>
+                    <input type="text" id="tourLanguage" value="English" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Price ($)</label>
+                    <input type="number" id="tourPrice" min="0" step="0.01" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Max Capacity</label>
+                    <input type="number" id="tourCapacity" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="tourDescription" rows="4" required></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">Create Tour</button>
+            </form>
+
+            <h2>Existing Tours</h2>
+            <div id="toursContainer" class="loading">Loading tours...</div>
+        </div>
+
+        <div id="usersTab" class="tab-content">
+            <h2>Add Admin User</h2>
+            <form id="addAdminForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="adminEmail" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="adminPassword" minlength="6" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="adminRole" required>
+                        <option value="admin">Admin</option>
+                        <option value="super_admin">Super Admin</option>
+                        <option value="moderator">Moderator</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="submit-btn">Add Admin</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
