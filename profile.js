@@ -13,18 +13,27 @@ async function loadProfile() {
     const profileInfo = document.getElementById('profileInfo');
     
     try {
+        profileInfo.innerHTML = '<p class="loading">Loading profile...</p>';
+        
         const response = await fetchWithAuth(API_ENDPOINTS.users.profile);
         
+        if (!response) return;
+        
         if (response.ok) {
-            const userData = await response.json();
+            const result = await response.json();
+            console.log('Profile data:', result);
+            
+            const userData = result.user || result.data || result;
             displayProfile(userData);
             fillUpdateForm(userData);
         } else {
+            const error = await response.json();
+            console.error('Profile load error:', error);
             profileInfo.innerHTML = '<p class="loading">Failed to load profile</p>';
         }
     } catch (error) {
         console.error('Error loading profile:', error);
-        profileInfo.innerHTML = '<p class="loading">Failed to load profile</p>';
+        profileInfo.innerHTML = '<p class="loading">Failed to load profile. Please try again.</p>';
     }
 }
 
@@ -48,7 +57,11 @@ function displayProfile(userData) {
     html += '<strong>Country:</strong> ' + (userData.country || 'Not set');
     html += '</div>';
     
-    if (userData.points !== undefined) {
+    html += '<div class="profile-info-row">';
+    html += '<strong>Role:</strong> ' + (userData.role || 'visitor');
+    html += '</div>';
+    
+    if (userData.points !== undefined && userData.points !== null) {
         html += '<div class="profile-info-row">';
         html += '<strong>Reward Points:</strong> ' + userData.points;
         html += '</div>';
@@ -74,11 +87,13 @@ async function handleUpdateProfile(e) {
     e.preventDefault();
     
     const profileData = {
-        email: document.getElementById('profileEmail').value,
-        name: document.getElementById('profileName').value,
-        phone: document.getElementById('profilePhone').value,
-        country: document.getElementById('profileCountry').value
+        email: document.getElementById('profileEmail').value.trim(),
+        name: document.getElementById('profileName').value.trim(),
+        phone: document.getElementById('profilePhone').value.trim(),
+        country: document.getElementById('profileCountry').value.trim()
     };
+    
+    console.log('Updating profile with:', profileData);
     
     try {
         const response = await fetchWithAuth(API_ENDPOINTS.users.profile, {
@@ -86,12 +101,15 @@ async function handleUpdateProfile(e) {
             body: JSON.stringify(profileData)
         });
         
+        if (!response) return;
+        
         if (response.ok) {
             alert('Profile updated successfully!');
             loadProfile();
         } else {
             const error = await response.json();
-            alert('Failed to update: ' + (error.message || 'Unknown error'));
+            console.error('Update profile error:', error);
+            alert('Failed to update: ' + (error.message || error.error || 'Unknown error'));
         }
     } catch (error) {
         console.error('Error updating profile:', error);
@@ -107,7 +125,7 @@ async function handleChangePassword(e) {
     const confirmPassword = document.getElementById('confirmPassword').value;
     
     if (newPassword !== confirmPassword) {
-        alert('Passwords do not match!');
+        alert('New passwords do not match!');
         return;
     }
     
@@ -121,18 +139,23 @@ async function handleChangePassword(e) {
         newPassword: newPassword
     };
     
+    console.log('Changing password...');
+    
     try {
-        const response = await fetchWithAuth(API_ENDPOINTS.users.profile + '/password', {
+        const response = await fetchWithAuth(API_ENDPOINTS.users.updatePassword, {
             method: 'PUT',
             body: JSON.stringify(passwordData)
         });
+        
+        if (!response) return;
         
         if (response.ok) {
             alert('Password changed successfully!');
             document.getElementById('passwordForm').reset();
         } else {
             const error = await response.json();
-            alert('Failed to change password: ' + (error.message || 'Unknown error'));
+            console.error('Change password error:', error);
+            alert('Failed to change password: ' + (error.message || error.error || 'Unknown error'));
         }
     } catch (error) {
         console.error('Error changing password:', error);

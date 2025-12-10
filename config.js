@@ -6,7 +6,8 @@ const API_ENDPOINTS = {
         login: API_BASE_URL + '/api/v1/auth/login'
     },
     users: {
-        profile: API_BASE_URL + '/api/v1/users/profile'
+        profile: API_BASE_URL + '/api/v1/users/profile',
+        updatePassword: API_BASE_URL + '/api/v1/users/profile'
     },
     tours: {
         all: API_BASE_URL + '/api/v1/tours',
@@ -29,6 +30,9 @@ const API_ENDPOINTS = {
     },
     reviews: {
         byTour: function(tourId) {
+            return API_BASE_URL + '/api/v1/tours/' + tourId + '/reviews';
+        },
+        create: function(tourId) {
             return API_BASE_URL + '/api/v1/tours/' + tourId + '/reviews';
         }
     },
@@ -80,12 +84,19 @@ async function fetchWithAuth(url, options) {
         if (options.body) fetchOptions.body = options.body;
     }
     
-    const response = await fetch(url, fetchOptions);
-    
-    if (response.status === 401) {
-        removeAuthToken();
-        window.location.href = 'login.html';
+    try {
+        const response = await fetch(url, fetchOptions);
+        
+        if (response.status === 401) {
+            removeAuthToken();
+            alert('Session expired. Please login again.');
+            window.location.href = 'login.html';
+            return null;
+        }
+        
+        return response;
+    } catch (error) {
+        console.error('Fetch error:', error);
+        throw error;
     }
-    
-    return response;
 }

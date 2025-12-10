@@ -16,10 +16,19 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadToursDropdown() {
     try {
         const response = await fetch(API_ENDPOINTS.tours.all);
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch tours');
+        }
+        
         const data = await response.json();
-        availableTours = data.tours || data || [];
+        console.log('Tours for dropdown:', data);
+        
+        availableTours = data.tours || data.data || data || [];
         
         const select = document.getElementById('tourSelect');
+        select.innerHTML = '<option value="">-- Select a Tour --</option>';
+        
         for (let i = 0; i < availableTours.length; i++) {
             const tour = availableTours[i];
             const option = document.createElement('option');
@@ -29,6 +38,7 @@ async function loadToursDropdown() {
         }
     } catch (error) {
         console.error('Error loading tours:', error);
+        alert('Error loading tours. Please refresh the page.');
     }
 }
 
@@ -37,8 +47,14 @@ function checkSelectedTour() {
     if (selectedTour) {
         try {
             const tour = JSON.parse(selectedTour);
-            document.getElementById('tourSelect').value = tour.id || tour._id;
-            updateSummary();
+            const tourId = tour.id || tour._id;
+            
+            setTimeout(function() {
+                const select = document.getElementById('tourSelect');
+                select.value = tourId;
+                updateSummary();
+            }, 500);
+            
             localStorage.removeItem('selectedTour');
         } catch (error) {
             console.error('Error parsing selected tour:', error);
@@ -98,6 +114,11 @@ async function handleSubmit(e) {
     const specialRequests = document.getElementById('specialRequests').value;
     const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
     
+    if (!tourId) {
+        alert('Please select a tour');
+        return;
+    }
+    
     let selectedTour = null;
     for (let i = 0; i < availableTours.length; i++) {
         if ((availableTours[i].id || availableTours[i]._id) === tourId) {
@@ -107,19 +128,23 @@ async function handleSubmit(e) {
     }
     
     if (!selectedTour) {
-        alert('Please select a tour');
+        alert('Please select a valid tour');
         return;
     }
+    
+    const totalPrice = (selectedTour.price || 0) * numTickets;
     
     const bookingData = {
         tourId: tourId,
         date: date,
         time: time,
         numberOfTickets: numTickets,
-        totalPrice: (selectedTour.price || 0) * numTickets,
+        totalPrice: totalPrice,
         specialRequests: specialRequests,
         paymentMethod: paymentMethod
     };
+    
+    console.log('Sending booking data:', bookingData);
     
     try {
         const response = await fetchWithAuth(API_ENDPOINTS.bookings.create, {
@@ -127,23 +152,26 @@ async function handleSubmit(e) {
             body: JSON.stringify(bookingData)
         });
         
+        if (!response) return;
+        
         if (response.ok) {
             const result = await response.json();
-            const bookingId = result.id || result._id || result.bookingId;
+            console.log('Booking response:', result);
             
-            if (paymentMethod === 'cash') {
-                await processPayment(bookingId, 'cash');
-            } else {
-                await processPayment(bookingId, 'points');
+            const bookingId = result.id || result._id || result.bookingId || result.data?.id;
+            
+            if (bookingId && paymentMethod) {
+                await processPayment(bookingId, paymentMethod);
             }
             
-            alert('Booking confirmed successfully!');
+            alert('Booking created successfully!');
             document.getElementById('bookingForm').reset();
             updateSummary();
             loadBookings();
         } else {
             const error = await response.json();
-            alert('Booking failed: ' + (error.message || 'Unknown error'));
+            console.error('Booking error:', error);
+            alert('Booking failed: ' + (error.message || error.error || 'Unknown error'));
         }
     } catch (error) {
         console.error('Error creating booking:', error);
@@ -157,7 +185,19 @@ async function processPayment(bookingId, method) {
             ? API_ENDPOINTS.bookings.payCash(bookingId)
             : API_ENDPOINTS.bookings.payPoints(bookingId);
         
-        await fetchWithAuth(endpoint, { method: 'POST' });
+        console.log('Processing payment:', method, 'for booking:', bookingId);
+        
+        const response = await fetchWithAuth(endpoint, { 
+            method: 'POST',
+            body: JSON.stringify({})
+        });
+        
+        if (response && response.ok) {
+            console.log('Payment processed successfully');
+        } else {
+            const error = await response.json();
+            console.error('Payment error:', error);
+        }
     } catch (error) {
         console.error('Error processing payment:', error);
     }
@@ -171,22 +211,28 @@ async function loadBookings() {
         
         const response = await fetchWithAuth(API_ENDPOINTS.bookings.all);
         
+        if (!response) return;
+        
         if (response.ok) {
             const data = await response.json();
-            const bookings = data.bookings || data || [];
+            console.log('Bookings data:', data);
+            
+            const bookings = data.bookings || data.data || data || [];
             
             if (bookings.length === 0) {
-                container.innerHTML = '<p class="loading">No bookings yet</p>';
+                container.innerHTML = '<p class="loading">No bookings yet. Book your first tour!</p>';
                 return;
             }
             
             displayBookings(bookings);
         } else {
+            const error = await response.json();
+            console.error('Load bookings error:', error);
             container.innerHTML = '<p class="loading">Failed to load bookings</p>';
         }
     } catch (error) {
         console.error('Error loading bookings:', error);
-        container.innerHTML = '<p class="loading">Failed to load bookings</p>';
+        container.innerHTML = '<p class="loading">Failed to load bookings. Please try again.</p>';
     }
 }
 
@@ -197,12 +243,13 @@ function displayBookings(bookings) {
     for (let i = 0; i < bookings.length; i++) {
         const booking = bookings[i];
         const bookingId = booking.id || booking._id;
-        const tourName = booking.tourName || (booking.tour && booking.tour.name) || 'Tour';
+        const tourName = booking.tourName || (booking.tour && (booking.tour.name || booking.tour.title)) || 'Tour';
         const bookingDate = new Date(booking.date).toLocaleDateString();
         const bookingTime = booking.time || 'N/A';
         const tickets = booking.numberOfTickets || booking.tickets || 0;
         const price = booking.totalPrice || booking.price || 0;
         const status = booking.status || 'pending';
+        const paymentStatus = booking.paymentStatus || 'pending';
         
         html += '<div class="booking-card">';
         html += '<h3>' + tourName + '</h3>';
@@ -210,10 +257,11 @@ function displayBookings(bookings) {
         html += '<p><strong>Time:</strong> ' + bookingTime + '</p>';
         html += '<p><strong>Tickets:</strong> ' + tickets + '</p>';
         html += '<p><strong>Total:</strong> $' + price + '</p>';
-        html += '<p><strong>Status:</strong> <span class="status-' + status + '">' + status + '</span></p>';
+        html += '<p><strong>Status:</strong> <span class="status-' + status + '">' + status.toUpperCase() + '</span></p>';
+        html += '<p><strong>Payment:</strong> <span class="status-' + paymentStatus + '">' + paymentStatus.toUpperCase() + '</span></p>';
         
         if (status !== 'cancelled') {
-            html += '<button class="btn-cancel" onclick="cancelBooking(\'' + bookingId + '\')">Cancel</button>';
+            html += '<button class="btn-cancel" onclick="cancelBooking(\'' + bookingId + '\')">Cancel Booking</button>';
         }
         
         html += '</div>';
@@ -232,12 +280,15 @@ async function cancelBooking(bookingId) {
             method: 'DELETE'
         });
         
+        if (!response) return;
+        
         if (response.ok) {
             alert('Booking cancelled successfully!');
             loadBookings();
         } else {
             const error = await response.json();
-            alert('Failed to cancel: ' + (error.message || 'Unknown error'));
+            console.error('Cancel booking error:', error);
+            alert('Failed to cancel: ' + (error.message || error.error || 'Unknown error'));
         }
     } catch (error) {
         console.error('Error cancelling booking:', error);
